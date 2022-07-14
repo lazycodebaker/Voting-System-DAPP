@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="./node_modules/web3/dist/web3.min.js"></script>
+    <script src="./node_modules/web3/dist/web3.min.js.map"></script>
+
+    <title>Simple Voting System DAPP</title>
+</head>
+
+<body>
+
+    <div id="vote"></div>
+
+
+</body>
+
+
+
+<script>
+
+    let accounts = ethereum.request({
+        method: "eth_requestAccounts"
+    });
+
+    accounts.then(function (result) {
+        const acccount = result[0];
+        const abi = [
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "_name",
+                        "type": "string"
+                    }
+                ],
+                "name": "AddCandidate",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "_candidateID",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "Vote",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": true,
+                        "internalType": "uint256",
+                        "name": "_candidateID",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "VoteEvent",
+                "type": "event"
+            },
+            {
+                "inputs": [],
+                "name": "candidateCount",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "candidates",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "id",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "name",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "voteCount",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "name": "voter",
+                "outputs": [
+                    {
+                        "internalType": "bool",
+                        "name": "",
+                        "type": "bool"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        var web3 = new Web3(window.web3.currentProvider);
+
+        const address = "0x75a328fd0E1D4BBe4f190b3AfB1e8679c6683888";
+
+        var contract = new web3.eth.Contract(abi, address);
+
+        window.contract = contract;
+
+        const candidateCount = contract.methods.candidateCount().call();
+
+        candidateCount.then(async (result) => {
+            const candidates = result;
+
+            for (let i = 1; i <= candidates; i++) {
+                const candidate = contract.methods.candidates(i).call();
+
+                const voteHTML = document.getElementById("vote");
+
+                candidate.then(async (result) => {
+                    const candidateId = result.id;
+                    const candidateName = result.name;
+                    const candidateVoteCount = result.voteCount;
+
+                    const candidate = document.createElement("div");
+                    
+                    const candidateNameHTML = document.createElement("h3");
+                    candidateNameHTML.innerHTML = candidateName;
+                    candidate.appendChild(candidateNameHTML);
+
+                    const candidateVoteCountHTML = document.createElement("h3");
+                    candidateVoteCountHTML.innerHTML = candidateVoteCount;
+                    candidate.appendChild(candidateVoteCountHTML);
+
+                    const candidateVoteButton = document.createElement("button");
+                    candidateVoteButton.innerHTML = "Vote";
+                    candidateVoteButton.onclick = function () {
+                        console.log("Vote for " + candidateId);
+                        contract.methods.Vote(candidateId).send({
+                            from: acccount,
+                            gas : 30000
+                        });
+                    };
+                    candidate.appendChild(candidateVoteButton);
+
+                    voteHTML.appendChild(candidate);
+
+                });
+            }
+        });
+    });
+</script>
+
+
+</html>
